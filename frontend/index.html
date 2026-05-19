@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Student Notes</title>
+</head>
+
+<body>
+
+<h1>Student Notes App</h1>
+
+<input id="name" placeholder="Enter name">
+
+<input id="note" placeholder="Enter note">
+
+<button onclick="save()">Submit</button>
+
+<h3>Notes:</h3>
+
+<div id="output"></div>
+
+<script>
+
+async function save(){
+
+let data={
+
+name:document.getElementById("name").value,
+
+note:document.getElementById("note").value
+
+}
+if(window.editId){
+
+await fetch(
+`http://127.0.0.1:8000/update/${window.editId}`,
+{
+method:"PUT",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify(data)
+
+})
+
+window.editId=null
+
+}
+
+else{
+
+await fetch(
+"http://127.0.0.1:8000/add",
+{
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify(data)
+
+})
+
+}
+
+load()
+
+}
+
+function edit(
+id,
+name,
+note
+){
+
+document
+.getElementById(
+"name"
+).value=name
+
+document
+.getElementById(
+"note"
+).value=note
+
+window.editId=id
+
+}
+
+async function remove(id){
+
+await fetch(
+`http://127.0.0.1:8000/delete/${id}`,
+{
+method:"DELETE"
+}
+)
+
+load()
+
+}
+
+async function load(){
+
+let response=await fetch(
+"http://127.0.0.1:8000/notes"
+)
+
+let data=await response.json()
+
+let html=""
+
+data.forEach(item=>{
+
+html+=`
+<div style="
+border:1px solid black;
+padding:10px;
+margin:10px;
+">
+
+<h3>${item.name}</h3>
+
+<p>${item.note}</p>
+
+<button
+onclick="edit(${item.id},
+'${item.name}',
+'${item.note}')"
+>
+Edit
+</button>
+
+<button
+onclick="remove(${item.id})"
+>
+Delete
+</button>
+
+</div>
+`
+
+})
+
+document.getElementById(
+"output"
+).innerHTML=html
+
+}
+
+load()
+
+</script>
+
+</body>
+</html>
