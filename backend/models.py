@@ -1,5 +1,6 @@
-from sqlalchemy import Column,Integer,String
+from sqlalchemy import Column, Integer, String
 from database import Base
+
 
 class NoteDB(Base):
 
@@ -14,3 +15,23 @@ class NoteDB(Base):
     name=Column(String)
 
     note=Column(String)
+
+
+class UserDB(Base):
+
+    __tablename__="users"
+
+    id=Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    username=Column(
+        String,
+        unique=True
+    )
+
+    password=Column(String)
+
+    
