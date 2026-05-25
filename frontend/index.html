@@ -1,117 +1,259 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Student Notes</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
 body{
-font-family:Arial,sans-serif;
-background:#f4f6fb;
-padding:30px;
+font-family:'Inter',sans-serif;
+margin:0;
+background:linear-gradient(120deg,#a1c4fd,#c2e9fb);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
 }
 
-.container{
-max-width:700px;
-margin:auto;
+.main-card{
 background:white;
-padding:25px;
-border-radius:15px;
-box-shadow:0 5px 20px rgba(0,0,0,.1);
+width:100%;
+max-width:900px;
+display:flex;
+border-radius:20px;
+overflow:hidden;
+box-shadow:0 10px 30px rgba(0,0,0,.15);
 }
 
-h1{text-align:center}
+.auth-panel,
+.notes-panel{
+padding:35px;
+flex:1;
+}
+
+.auth-panel{
+background:#f7faff;
+}
+
+h1{
+text-align:center;
+margin-bottom:25px;
+}
+
+.auth-tabs{
+display:flex;
+margin-bottom:20px;
+}
+
+.auth-tab{
+flex:1;
+padding:12px;
+border:none;
+background:none;
+font-weight:bold;
+cursor:pointer;
+border-bottom:3px solid transparent;
+}
+
+.active{
+border-color:#4b7bec;
+color:#4b7bec;
+}
+
+.auth-form{
+display:flex;
+flex-direction:column;
+gap:15px;
+}
 
 input{
-width:100%;
 padding:12px;
-margin-top:10px;
 border:1px solid #ddd;
 border-radius:8px;
+width:100%;
 box-sizing:border-box;
 }
 
 button{
-padding:10px 15px;
-margin-top:10px;
+padding:12px;
 border:none;
 border-radius:8px;
 cursor:pointer;
+}
+
+.auth-btn{
 background:#4b7bec;
 color:white;
 }
 
-.primary{
-width:100%;
+.logout-btn{
+background:#f44336;
+color:white;
+margin-bottom:20px;
 }
 
-.note{
-border:1px solid #ddd;
-padding:15px;
-margin-top:10px;
-border-radius:10px;
-background:#fafafa;
-}
-
-.row{
+.note-form{
 display:flex;
 gap:10px;
+margin-bottom:20px;
 }
 
-#notesSection{
-display:none;
+.note-form input{
+flex:1;
+}
+
+.note-form button{
+background:#4b7bec;
+color:white;
+}
+
+.note-item{
+border:1px solid #eee;
+padding:15px;
+border-radius:10px;
+margin-bottom:15px;
+background:#f8faff;
+}
+
+.note-actions{
+display:flex;
+gap:10px;
+margin-top:10px;
+}
+
+.note-actions button{
+background:#4b7bec;
+color:white;
+}
+
+.deleteBtn{
+background:#f44336!important;
+}
+
+@media(max-width:800px){
+
+.main-card{
+flex-direction:column;
+}
+
 }
 </style>
+
 </head>
 
 <body>
 
-<div class="container">
+<div class="main-card">
 
-<h1>Student Notes App</h1>
+<div class="auth-panel" id="authSection">
 
-<div id="authSection">
+<h1>Student Notes</h1>
 
-<h3>Signup / Login</h3>
+<div class="auth-tabs">
 
-<input id="username" placeholder="Username">
-
-<input id="password"
-type="password"
-placeholder="Password">
-
-<div class="row">
-<button onclick="signup()" class="primary">
-Signup
+<button
+id="signupTab"
+class="auth-tab active"
+onclick="switchTab('signup')">
+Sign Up
 </button>
 
-<button onclick="login()" class="primary">
+<button
+id="loginTab"
+class="auth-tab"
+onclick="switchTab('login')">
 Login
 </button>
-</div>
 
 </div>
 
-<div id="notesSection">
+<form
+id="signupForm"
+class="auth-form"
+onsubmit="event.preventDefault();signup()">
 
-<button onclick="logout()">
+<input
+id="signup-username"
+placeholder="Create Username"
+required>
+
+<input
+id="signup-password"
+type="password"
+placeholder="Create Password"
+required>
+
+<button
+class="auth-btn"
+type="submit">
+Create Account
+</button>
+
+</form>
+
+
+<form
+id="loginForm"
+class="auth-form"
+style="display:none"
+onsubmit="event.preventDefault();login()">
+
+<input
+id="login-username"
+placeholder="Username"
+required>
+
+<input
+id="login-password"
+type="password"
+placeholder="Password"
+required>
+
+<button
+class="auth-btn"
+type="submit">
+Login
+</button>
+
+</form>
+
+</div>
+
+
+<div
+class="notes-panel"
+id="notesSection"
+hidden>
+
+<button
+class="logout-btn"
+onclick="logout()">
 Logout
 </button>
 
-<h3>Add Note</h3>
+<form
+class="note-form"
+onsubmit="event.preventDefault();save()">
 
-<input id="name"
-placeholder="Enter title">
+<input
+id="name"
+placeholder="Title"
+required>
 
-<input id="note"
-placeholder="Enter note">
+<input
+id="note"
+placeholder="Write note"
+required>
 
-<button onclick="save()"
-class="primary">
-Submit
+<button type="submit">
+Save
 </button>
 
-<h3>Your Notes</h3>
+</form>
 
 <div id="output"></div>
 
@@ -122,23 +264,49 @@ Submit
 
 <script>
 
-if(localStorage.getItem("token")){
+function switchTab(type){
 
-showNotes()
+signupTab.classList.toggle(
+"active",
+type==="signup"
+)
 
-load()
+loginTab.classList.toggle(
+"active",
+type==="login"
+)
+
+signupForm.style.display=
+type==="signup"
+?"flex":"none"
+
+loginForm.style.display=
+type==="login"
+?"flex":"none"
 
 }
 
 function showNotes(){
 
-document.getElementById(
-"authSection"
-).style.display="none"
+authSection.style.display="none"
 
-document.getElementById(
-"notesSection"
-).style.display="block"
+notesSection.hidden=false
+
+}
+
+function showAuth(){
+
+authSection.style.display="block"
+
+notesSection.hidden=true
+
+}
+
+if(localStorage.getItem("token")){
+
+showNotes()
+
+load()
 
 }
 
@@ -154,58 +322,69 @@ location.reload()
 
 async function signup(){
 
-let res=await fetch(
+let username=
+document.getElementById(
+"signup-username"
+).value.trim()
+
+let password=
+document.getElementById(
+"signup-password"
+).value.trim()
+
+let res=
+await fetch(
 "https://student-note-app.onrender.com/signup",
 {
 method:"POST",
-
 headers:{
 "Content-Type":"application/json"
 },
-
 body:JSON.stringify({
-
-username:
-document.getElementById("username").value,
-
-password:
-document.getElementById("password").value
-
+username,
+password
 })
+}
+)
 
-})
-
-let data=await res.json()
+let data=
+await res.json()
 
 alert(data.message)
 
-}
+switchTab("login")
 
+}
 
 async function login(){
 
-let res=await fetch(
+let username=
+document.getElementById(
+"login-username"
+).value.trim()
+
+let password=
+document.getElementById(
+"login-password"
+).value.trim()
+
+let res=
+await fetch(
 "https://student-note-app.onrender.com/login",
 {
 method:"POST",
-
 headers:{
 "Content-Type":"application/json"
 },
-
 body:JSON.stringify({
-
-username:
-document.getElementById("username").value,
-
-password:
-document.getElementById("password").value
-
+username,
+password
 })
+}
+)
 
-})
-
-let data=await res.json()
+let data=
+await res.json()
 
 if(data.token){
 
@@ -221,43 +400,25 @@ load()
 }
 else{
 
-alert(
-data.message
-)
+alert(data.message)
 
 }
 
 }
-
 
 
 async function save(){
 
 let data={
 
-name:
-document.getElementById(
-"name"
-).value.trim(),
+name:name.value.trim(),
 
-note:
-document.getElementById(
-"note"
-).value.trim()
+note:note.value.trim()
 
 }
 
-if(!data.name || !data.note){
-
-alert(
-"Fill all fields"
-)
-
-return
-
-}
-
-let url="https://student-note-app.onrender.com/add"
+let url=
+"https://student-note-app.onrender.com/add"
 
 let method="POST"
 
@@ -270,127 +431,70 @@ method="PUT"
 
 }
 
-let response=await fetch(
-url,
-{
-method:method,
+await fetch(url,{
+
+method,
 
 headers:{
-
 "Content-Type":"application/json",
-
-"token":
-localStorage.getItem(
-"token"
-)
-
+token:localStorage.getItem("token")
 },
 
-body:JSON.stringify(
-data
-)
+body:JSON.stringify(data)
 
-}
-)
+})
 
-let result=
-await response.json()
+editId=null
 
-console.log(result)
-
-window.editId=null
-
-document.getElementById(
-"name"
-).value=""
-
-document.getElementById(
-"note"
-).value=""
-
-await load()
-
-}
-
-
-
-function edit(
-id,
-name,
-note
-){
-
-document.getElementById(
-"name"
-).value=name
-
-document.getElementById(
-"note"
-).value=note
-
-window.editId=id
-
-}
-
-
-async function remove(id){
-
-await fetch(
-
-`https://student-note-app.onrender.com/delete/${id}`,
-
-{
-
-method:"DELETE",
-
-headers:{
-
-"token":
-localStorage.getItem(
-"token"
-)
-
-}
-
-}
-
-)
+name.value=""
+note.value=""
 
 load()
 
 }
 
+function edit(id,noteName,noteText){
 
+name.value=noteName
+
+note.value=noteText
+
+window.editId=id
+
+}
+
+async function remove(id){
+
+await fetch(
+`https://student-note-app.onrender.com/delete/${id}`,
+{
+method:"DELETE",
+headers:{
+token:localStorage.getItem("token")
+}
+})
+
+load()
+
+}
 
 async function load(){
 
 let response=
 await fetch(
-
 "https://student-note-app.onrender.com/notes",
-
 {
-
 headers:{
-
-"token":
+token:
 localStorage.getItem(
 "token"
 )
-
 }
-
 }
-
 )
 
 let data=
 await response.json()
-
-console.log(
-"Notes:",
-data
-)
 
 let html=""
 
@@ -400,30 +504,25 @@ data.forEach(item=>{
 
 html+=`
 
-<div class="note">
+<div class="note-item">
 
-<h3>
-${item.name}
-</h3>
+<h3>${item.name}</h3>
 
-<p>
-${item.note}
-</p>
+<p>${item.note}</p>
 
-<button
-onclick="edit(
-${item.id},
-'${item.name}',
-'${item.note}'
-)">
+<div class="note-actions">
+
+<button onclick="edit(${item.id},'${item.name}','${item.note}')">
 Edit
 </button>
 
 <button
-onclick=
-"remove(${item.id})">
+class="deleteBtn"
+onclick="remove(${item.id})">
 Delete
 </button>
+
+</div>
 
 </div>
 
@@ -433,9 +532,7 @@ Delete
 
 }
 
-document.getElementById(
-"output"
-).innerHTML=html
+output.innerHTML=html
 
 }
 
