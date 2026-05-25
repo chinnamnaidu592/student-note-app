@@ -185,7 +185,7 @@ alert(data.message)
 async function login(){
 
 let res=await fetch(
-"http://127.0.0.1:8000/login",
+"https://student-note-app.onrender.com/login",
 {
 method:"POST",
 
@@ -257,14 +257,14 @@ return
 
 }
 
-let url="http://127.0.0.1:8000/add"
+let url="https://student-note-app.onrender.com/add"
 
 let method="POST"
 
 if(window.editId){
 
 url=
-`http://127.0.0.1:8000/update/${window.editId}`
+`https://student-note-app.onrender.com/update/${window.editId}`
 
 method="PUT"
 
@@ -337,7 +337,7 @@ async function remove(id){
 
 await fetch(
 
-`http://127.0.0.1:8000/delete/${id}`,
+`https://student-note-app.onrender.com/delete/${id}`,
 
 {
 
@@ -367,7 +367,7 @@ async function load(){
 let response=
 await fetch(
 
-"http://127.0.0.1:8000/notes",
+"https://student-note-app.onrender.com/notes",
 
 {
 
