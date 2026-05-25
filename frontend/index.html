@@ -1,58 +1,161 @@
 <!DOCTYPE html>
 <html>
-
 <head>
+<meta charset="UTF-8">
 <title>Student Notes</title>
+
+<style>
+body{
+font-family:Arial,sans-serif;
+background:#f4f6fb;
+padding:30px;
+}
+
+.container{
+max-width:700px;
+margin:auto;
+background:white;
+padding:25px;
+border-radius:15px;
+box-shadow:0 5px 20px rgba(0,0,0,.1);
+}
+
+h1{text-align:center}
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:1px solid #ddd;
+border-radius:8px;
+box-sizing:border-box;
+}
+
+button{
+padding:10px 15px;
+margin-top:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+background:#4b7bec;
+color:white;
+}
+
+.primary{
+width:100%;
+}
+
+.note{
+border:1px solid #ddd;
+padding:15px;
+margin-top:10px;
+border-radius:10px;
+background:#fafafa;
+}
+
+.row{
+display:flex;
+gap:10px;
+}
+
+#notesSection{
+display:none;
+}
+</style>
 </head>
 
 <body>
 
+<div class="container">
+
 <h1>Student Notes App</h1>
 
-<input id="name" placeholder="Enter name">
+<div id="authSection">
 
-<input id="note" placeholder="Enter note">
+<h3>Signup / Login</h3>
 
-<button onclick="save()">Submit</button>
+<input id="username" placeholder="Username">
 
-<h3>Notes:</h3>
+<input id="password"
+type="password"
+placeholder="Password">
+
+<div class="row">
+<button onclick="signup()" class="primary">
+Signup
+</button>
+
+<button onclick="login()" class="primary">
+Login
+</button>
+</div>
+
+</div>
+
+<div id="notesSection">
+
+<button onclick="logout()">
+Logout
+</button>
+
+<h3>Add Note</h3>
+
+<input id="name"
+placeholder="Enter title">
+
+<input id="note"
+placeholder="Enter note">
+
+<button onclick="save()"
+class="primary">
+Submit
+</button>
+
+<h3>Your Notes</h3>
 
 <div id="output"></div>
 
+</div>
+
+</div>
+
+
 <script>
 
-async function save(){
+if(localStorage.getItem("token")){
 
-let data={
+showNotes()
 
-name:document.getElementById("name").value,
-
-note:document.getElementById("note").value
-
-}
-if(window.editId){
-
-await fetch(
-`http://127.0.0.1:8000/update/${window.editId}`,
-{
-method:"PUT",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify(data)
-
-})
-
-window.editId=null
+load()
 
 }
 
-else{
+function showNotes(){
 
-await fetch(
-"http://127.0.0.1:8000/add",
+document.getElementById(
+"authSection"
+).style.display="none"
+
+document.getElementById(
+"notesSection"
+).style.display="block"
+
+}
+
+function logout(){
+
+localStorage.removeItem(
+"token"
+)
+
+location.reload()
+
+}
+
+async function signup(){
+
+let res=await fetch(
+"http://127.0.0.1:8000/signup",
 {
 method:"POST",
 
@@ -60,15 +163,156 @@ headers:{
 "Content-Type":"application/json"
 },
 
-body:JSON.stringify(data)
+body:JSON.stringify({
+
+username:
+document.getElementById("username").value,
+
+password:
+document.getElementById("password").value
 
 })
 
+})
+
+let data=await res.json()
+
+alert(data.message)
+
 }
+
+
+async function login(){
+
+let res=await fetch(
+"http://127.0.0.1:8000/login",
+{
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+username:
+document.getElementById("username").value,
+
+password:
+document.getElementById("password").value
+
+})
+
+})
+
+let data=await res.json()
+
+if(data.token){
+
+localStorage.setItem(
+"token",
+data.token
+)
+
+showNotes()
 
 load()
 
 }
+else{
+
+alert(
+data.message
+)
+
+}
+
+}
+
+
+
+async function save(){
+
+let data={
+
+name:
+document.getElementById(
+"name"
+).value.trim(),
+
+note:
+document.getElementById(
+"note"
+).value.trim()
+
+}
+
+if(!data.name || !data.note){
+
+alert(
+"Fill all fields"
+)
+
+return
+
+}
+
+let url="http://127.0.0.1:8000/add"
+
+let method="POST"
+
+if(window.editId){
+
+url=
+`http://127.0.0.1:8000/update/${window.editId}`
+
+method="PUT"
+
+}
+
+let response=await fetch(
+url,
+{
+method:method,
+
+headers:{
+
+"Content-Type":"application/json",
+
+"token":
+localStorage.getItem(
+"token"
+)
+
+},
+
+body:JSON.stringify(
+data
+)
+
+}
+)
+
+let result=
+await response.json()
+
+console.log(result)
+
+window.editId=null
+
+document.getElementById(
+"name"
+).value=""
+
+document.getElementById(
+"note"
+).value=""
+
+await load()
+
+}
+
+
 
 function edit(
 id,
@@ -76,13 +320,11 @@ name,
 note
 ){
 
-document
-.getElementById(
+document.getElementById(
 "name"
 ).value=name
 
-document
-.getElementById(
+document.getElementById(
 "note"
 ).value=note
 
@@ -90,68 +332,112 @@ window.editId=id
 
 }
 
+
 async function remove(id){
 
 await fetch(
+
 `http://127.0.0.1:8000/delete/${id}`,
+
 {
-method:"DELETE"
+
+method:"DELETE",
+
+headers:{
+
+"token":
+localStorage.getItem(
+"token"
+)
+
 }
+
+}
+
 )
 
 load()
 
 }
 
+
+
 async function load(){
 
-let response=await fetch(
-"http://127.0.0.1:8000/notes"
+let response=
+await fetch(
+
+"http://127.0.0.1:8000/notes",
+
+{
+
+headers:{
+
+"token":
+localStorage.getItem(
+"token"
 )
 
-let data=await response.json()
+}
+
+}
+
+)
+
+let data=
+await response.json()
+
+console.log(
+"Notes:",
+data
+)
 
 let html=""
+
+if(Array.isArray(data)){
 
 data.forEach(item=>{
 
 html+=`
-<div style="
-border:1px solid black;
-padding:10px;
-margin:10px;
-">
 
-<h3>${item.name}</h3>
+<div class="note">
 
-<p>${item.note}</p>
+<h3>
+${item.name}
+</h3>
+
+<p>
+${item.note}
+</p>
 
 <button
-onclick="edit(${item.id},
+onclick="edit(
+${item.id},
 '${item.name}',
-'${item.note}')"
->
+'${item.note}'
+)">
 Edit
 </button>
 
 <button
-onclick="remove(${item.id})"
->
+onclick=
+"remove(${item.id})">
 Delete
 </button>
 
 </div>
+
 `
 
 })
+
+}
 
 document.getElementById(
 "output"
 ).innerHTML=html
 
 }
-
-load()
 
 </script>
 

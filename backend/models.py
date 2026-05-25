@@ -15,6 +15,8 @@ class NoteDB(Base):
     name=Column(String)
 
     note=Column(String)
+    
+    username=Column(String)
 
 
 class UserDB(Base):

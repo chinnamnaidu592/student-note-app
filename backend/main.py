@@ -1,20 +1,16 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy.orm import Session
 
 from database import SessionLocal,engine
-from models import Base,NoteDB
+from models import Base,NoteDB,UserDB
 
 from passlib.context import CryptContext
-from models import UserDB
 
-from jose import jwt
+from jose import jwt,JWTError
 from datetime import datetime,timedelta
-
-from fastapi import Header
-from jose import JWTError
 
 app=FastAPI()
 
@@ -26,6 +22,7 @@ pwd=CryptContext(
 SECRET_KEY="mysecret123"
 
 ALGORITHM="HS256"
+
 
 def create_token(username):
 
@@ -47,7 +44,12 @@ def create_token(username):
         algorithm=ALGORITHM
     )
 
+
 def get_current_user(token:str):
+
+    if not token:
+
+        return None
 
     try:
 
@@ -65,6 +67,7 @@ def get_current_user(token:str):
 
         return None
 
+
 Base.metadata.create_all(
     bind=engine
 )
@@ -77,10 +80,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class Note(BaseModel):
 
     name:str
     note:str
+
 
 class User(BaseModel):
 
@@ -97,28 +102,10 @@ def home():
 
 
 @app.post("/add")
-def add_note(data:Note):
-
-    db=SessionLocal()
-
-    item=NoteDB(
-        name=data.name,
-        note=data.note
-    )
-
-    db.add(item)
-
-    db.commit()
-
-    db.close()
-
-    return{
-        "message":"saved"
-    }
-
-
-@app.get("/notes")
-def get_notes(token:str=Header(default=None)):
+def add_note(
+    data:Note,
+    token:str=Header(default=None)
+):
 
     username=get_current_user(
         token
@@ -132,17 +119,77 @@ def get_notes(token:str=Header(default=None)):
 
     db=SessionLocal()
 
-    notes=db.query(
-        NoteDB
-    ).all()
+    note=NoteDB(
+
+        name=data.name,
+
+        note=data.note,
+
+        username=username
+    )
+
+    db.add(note)
+
+    db.commit()
 
     db.close()
 
-    return notes
+    return{
+        "message":"note added"
+    }
+
+
+@app.get("/notes")
+def get_notes(
+    token:str=Header(default=None)
+):
+
+    username=get_current_user(token)
+
+    if not username:
+
+        return []
+
+    db=SessionLocal()
+
+    notes=db.query(
+        NoteDB
+    ).filter(
+        NoteDB.username==username
+    ).all()
+
+    result=[]
+
+    for n in notes:
+
+        result.append({
+
+            "id":n.id,
+            "name":n.name,
+            "note":n.note
+
+        })
+
+    db.close()
+
+    return result
 
 
 @app.delete("/delete/{id}")
-def delete_note(id:int):
+def delete_note(
+    id:int,
+    token:str=Header(default=None)
+):
+
+    username=get_current_user(
+        token
+    )
+
+    if not username:
+
+        return{
+            "message":"invalid token"
+        }
 
     db=SessionLocal()
 
@@ -164,12 +211,23 @@ def delete_note(id:int):
         "message":"deleted"
     }
 
-@app.put("/update/{id}")
 
+@app.put("/update/{id}")
 def update_note(
     id:int,
-    data:Note
+    data:Note,
+    token:str=Header(default=None)
 ):
+
+    username=get_current_user(
+        token
+    )
+
+    if not username:
+
+        return{
+            "message":"invalid token"
+        }
 
     db=SessionLocal()
 
@@ -182,6 +240,7 @@ def update_note(
     if item:
 
         item.name=data.name
+
         item.note=data.note
 
         db.commit()
@@ -192,8 +251,8 @@ def update_note(
         "message":"updated"
     }
 
-@app.post("/signup")
 
+@app.post("/signup")
 def signup(data:User):
 
     db=SessionLocal()
@@ -209,7 +268,9 @@ def signup(data:User):
         db.close()
 
         return{
+
             "message":"username already exists"
+
         }
 
     hashed=pwd.hash(
@@ -231,13 +292,13 @@ def signup(data:User):
     db.close()
 
     return{
+
         "message":"signup success"
+
     }
 
-@app.post("/login")
 
 @app.post("/login")
-
 def login(data:User):
 
     db=SessionLocal()
